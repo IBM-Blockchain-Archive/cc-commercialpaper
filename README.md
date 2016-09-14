@@ -1,2 +1,2 @@
 # cc-commercialpaper
-Chaincode for Hyperledger farbric which demonstrates issuing and buying commercial paper
+Chaincode for Hyperledger fabric which demonstrates issuing and buying commercial paper
