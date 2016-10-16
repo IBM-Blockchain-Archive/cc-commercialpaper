@@ -2,9 +2,12 @@
 Sample chaincode which demonstrates how to trade commercial paper between companies
 
 # Deployment
-* To deploy using the NodeJS hfc module, obtain the package vi [gopkg.in](http://gopkg.in/ibm-blockchain/cc-commercialpaper.v2)
-* To deploy via the fabric REST API, use the following for the path parameter:  http://gopkg.in/ibm-blockchain/cc-commercialpaper.v2
+In order to support multiple versions of the Hyperledger fabric, this repository uses branches in combination with gopkg.in URLs.  The master branch will typically support the fabric version in current development.  
 
-# Supported platforms
-* Hyperledger fabric v0.6.*-developer-preview
-* IBM Bluemix Blockchain Service v1.0.0 (not yet available)
+# Versions and Supported Platforms
+* [v1.0](https://github.com/ibm-blockchain/cc-commercialpaper/tree/v1.0)
+  * Hyperledger fabric v0.5-developer-preview
+  * IBM Bluemix Blockchain Service v0.4.2
+* [v2.0](https://github.com/ibm-blockchain/cc-commercialpaper/tree/v2.0)
+  * Hyperledger fabric v0.6.*-developer-preview
+  * IBM Bluemix Blockchain Service v1.0.0 (not yet available)
