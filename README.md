@@ -6,5 +6,5 @@ Sample chaincode which demonstrates how to trade commercial paper between compan
 * To deploy via the fabric REST API, use the following for the path parameter:  http://gopkg.in/ibm-blockchain/cc-commercialpaper.v1
 
 # Supported platforms
-Hyperledger fabric v0.5-developer-preview
-IBM Bluemix Blockchain Service v0.4.2
+* Hyperledger fabric v0.5-developer-preview
+* IBM Bluemix Blockchain Service v0.4.2
