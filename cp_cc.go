@@ -305,7 +305,7 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 		// 	fmt.Println("Error marshalling quote")
 		// 	return nil, errors.New("Error issuing quote")
 		// }
-		err = stub.PutState("1", []byte(args[0]))
+		err = stub.PutState("1", "1")
 		if err != nil {
 			fmt.Println("Error issuing paper")
 			return nil, errors.New("Error issuing quote")
