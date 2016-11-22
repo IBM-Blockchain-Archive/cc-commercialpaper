@@ -247,10 +247,6 @@ func (t *SimpleChaincode) createAccount(stub shim.ChaincodeStubInterface, args [
 
 func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
-	fmt.Println("issueQuote " + quote.Issuer)
-	return nil, nil;
-	
-	/*
 	//need one arg
 	if len(args) != 1 {
 		fmt.Println("error invalid arguments")
@@ -265,7 +261,7 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 	err = json.Unmarshal([]byte(args[0]), &quote)
 	if err != nil {
 		fmt.Println("error invalid Quote issue")
-		return nil, errors.New("Invalid Quote issue")
+		return "nil", errors.New("Invalid Quote issue")
 	}
 
 	//generate the CUSIP
@@ -307,12 +303,12 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 		cpBytes, err := json.Marshal(&quote)
 		if err != nil {
 			fmt.Println("Error marshalling quote")
-			return nil, errors.New("Error issuing quote")
+			return "nil", errors.New("Error issuing quote")
 		}
 		err = stub.PutState(quotePrefix+quote.CUSIP, cpBytes)
 		if err != nil {
 			fmt.Println("Error issuing paper")
-			return nil, errors.New("Error issuing quote")
+			return "nil", errors.New("Error issuing quote")
 		}
 
 		// fmt.Println("Marshalling account bytes to write")
@@ -332,13 +328,13 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 		keysBytes, err := stub.GetState("QuoteKeys")
 		if err != nil {
 			fmt.Println("Error retrieving paper keys")
-			return nil, errors.New("Error retrieving paper keys")
+			return "nil", errors.New("Error retrieving paper keys")
 		}
 		var keys []string
 		err = json.Unmarshal(keysBytes, &keys)
 		if err != nil {
 			fmt.Println("Error unmarshel keys")
-			return nil, errors.New("Error unmarshalling paper keys ")
+			return "nil", errors.New("Error unmarshalling paper keys ")
 		}
 
 		fmt.Println("Appending the new key to Paper Keys")
@@ -353,18 +349,18 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 			keysBytesToWrite, err := json.Marshal(&keys)
 			if err != nil {
 				fmt.Println("Error marshalling keys")
-				return nil, errors.New("Error marshalling the keys")
+				return "nil", errors.New("Error marshalling the keys")
 			}
 			fmt.Println("Put state on QuoteKeys")
 			err = stub.PutState("QuoteKeys", keysBytesToWrite)
 			if err != nil {
 				fmt.Println("Error writting keys back")
-				return nil, errors.New("Error writing the keys back")
+				return "nil", errors.New("Error writing the keys back")
 			}
 		}
 
 		fmt.Println("Issue commercial paper %+v\n", quote)
-		return nil, nil
+		return "nil", nil
 	} else {
 		fmt.Println("CUSIP exists")
 
@@ -399,7 +395,7 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 		fmt.Println("Updated commercial paper %+v\n", quoterx)
 		return nil, nil
 	}
-	*/
+	
 }
 
 
