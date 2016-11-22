@@ -288,14 +288,14 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 
 	// cp.Owners = append(cp.Owners, owner)
 
-	suffix, err := generateCUSIPSuffix(quote.IssueDate, 10000)
-	if err != nil {
-		fmt.Println("Error generating cusip")
-		return nil, errors.New("Error generating CUSIP")
-	}
+	// suffix, err := generateCUSIPSuffix(quote.IssueDate, 10000)
+	// if err != nil {
+	// 	fmt.Println("Error generating cusip")
+	// 	return nil, errors.New("Error generating CUSIP")
+	// }
 
-	fmt.Println("Marshalling Quote bytes")
-	quote.CUSIP = suffix
+	// fmt.Println("Marshalling Quote bytes")
+	// quote.CUSIP = suffix
 
 	fmt.Println("Getting State on CP " + quote.CUSIP)
 	cpRxBytes, err := stub.GetState(quotePrefix + quote.CUSIP)
