@@ -131,6 +131,11 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 		fmt.Println("Failed to initialize paper key collection")
 	}
 
+	err1 := stub.PutState("QuoteKeys", blankBytes)
+	if err1 != nil {
+		fmt.Println("Failed to initialize paper key collection")
+	}
+
 	fmt.Println("Initialization complete")
 	return nil, nil
 }
@@ -251,7 +256,7 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 
 	var quote Quote
 	var err error
-	var account Account
+	//var account Account
 
 	fmt.Println("Unmarshalling Quote")
 	err = json.Unmarshal([]byte(args[0]), &quote)
@@ -262,19 +267,19 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 
 	//generate the CUSIP
 	//get account prefix
-	fmt.Println("Getting state of - " + accountPrefix + quote.Issuer)
-	accountBytes, err := stub.GetState(accountPrefix + quote.Issuer)
-	if err != nil {
-		fmt.Println("Error Getting state of - " + accountPrefix + quote.Issuer)
-		return nil, errors.New("Error retrieving account " + quote.Issuer)
-	}
-	err = json.Unmarshal(accountBytes, &account)
-	if err != nil {
-		fmt.Println("Error Unmarshalling accountBytes")
-		return nil, errors.New("Error retrieving account " + quote.Issuer)
-	}
+	//fmt.Println("Getting state of - " + accountPrefix + quote.Issuer)
+	// accountBytes, err := stub.GetState(accountPrefix + quote.Issuer)
+	// if err != nil {
+	// 	fmt.Println("Error Getting state of - " + accountPrefix + quote.Issuer)
+	// 	return nil, errors.New("Error retrieving account " + quote.Issuer)
+	// }
+	// err = json.Unmarshal(accountBytes, &account)
+	// if err != nil {
+	// 	fmt.Println("Error Unmarshalling accountBytes")
+	// 	return nil, errors.New("Error retrieving account " + quote.Issuer)
+	// }
 
-	account.AssetsIds = append(account.AssetsIds, quote.CUSIP)
+	// account.AssetsIds = append(account.AssetsIds, quote.CUSIP)
 
 	// Set the issuer to be the owner of all quantity
 	// var owner Owner
@@ -290,7 +295,7 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 	}
 
 	fmt.Println("Marshalling Quote bytes")
-	quote.CUSIP = account.Prefix + suffix
+	quote.CUSIP = suffix
 
 	fmt.Println("Getting State on CP " + quote.CUSIP)
 	cpRxBytes, err := stub.GetState(quotePrefix + quote.CUSIP)
@@ -321,7 +326,7 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 
 		// Update the paper keys by adding the new key
 		fmt.Println("Getting Paper Keys")
-		keysBytes, err := stub.GetState("PaperKeys")
+		keysBytes, err := stub.GetState("QuoteKeys")
 		if err != nil {
 			fmt.Println("Error retrieving paper keys")
 			return nil, errors.New("Error retrieving paper keys")
@@ -347,8 +352,8 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 				fmt.Println("Error marshalling keys")
 				return nil, errors.New("Error marshalling the keys")
 			}
-			fmt.Println("Put state on PaperKeys")
-			err = stub.PutState("PaperKeys", keysBytesToWrite)
+			fmt.Println("Put state on QuoteKeys")
+			err = stub.PutState("QuoteKeys", keysBytesToWrite)
 			if err != nil {
 				fmt.Println("Error writting keys back")
 				return nil, errors.New("Error writing the keys back")
