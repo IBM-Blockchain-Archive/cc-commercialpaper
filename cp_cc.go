@@ -911,7 +911,12 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	} else if function == "init" {
 		fmt.Println("Firing init")
 		return t.Init(stub, "init", args)
+	} else if function == "issueQuote" {
+		fmt.Println("Firing issueQuote")
+		//Create an asset with some value
+		return t.issueQuote(stub, args)
 	}
+
 
 	return nil, errors.New("Received unknown function invocation")
 }
