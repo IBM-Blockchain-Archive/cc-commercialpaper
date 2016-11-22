@@ -257,12 +257,12 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 	var err error
 	//var account Account
 
-	fmt.Println("Unmarshalling Quote")
-	err = json.Unmarshal([]byte(args[0]), &quote)
-	if err != nil {
-		fmt.Println("error invalid Quote issue")
-		return nil, errors.New("Invalid Quote issue")
-	}
+	// fmt.Println("Unmarshalling Quote")
+	// err = json.Unmarshal([]byte(args[0]), &quote)
+	// if err != nil {
+	// 	fmt.Println("error invalid Quote issue")
+	// 	return nil, errors.New("Invalid Quote issue")
+	// }
 
 	//generate the CUSIP
 	//get account prefix
@@ -296,16 +296,16 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 	// fmt.Println("Marshalling Quote bytes")
 	// quote.CUSIP = suffix
 
-	fmt.Println("Getting State on CP " + quote.CUSIP)
-	cpRxBytes, err := stub.GetState(quotePrefix + quote.CUSIP)
-	if cpRxBytes == nil {
-		fmt.Println("CUSIP does not exist, creating it")
-		cpBytes, err := json.Marshal(&quote)
-		if err != nil {
-			fmt.Println("Error marshalling quote")
-			return nil, errors.New("Error issuing quote")
-		}
-		err = stub.PutState(quotePrefix+quote.CUSIP, cpBytes)
+	// fmt.Println("Getting State on CP " + quote.CUSIP)
+	// cpRxBytes, err := stub.GetState(quotePrefix + quote.CUSIP)
+	// if cpRxBytes == nil {
+		// fmt.Println("CUSIP does not exist, creating it")
+		// cpBytes, err := json.Marshal(&quote)
+		// if err != nil {
+		// 	fmt.Println("Error marshalling quote")
+		// 	return nil, errors.New("Error issuing quote")
+		// }
+		err = stub.PutState("1", []byte(args[0]))
 		if err != nil {
 			fmt.Println("Error issuing paper")
 			return nil, errors.New("Error issuing quote")
@@ -361,40 +361,40 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 
 		fmt.Println("Issue commercial paper %+v\n", quote)
 		return nil, nil
-	} else {
-		fmt.Println("CUSIP exists")
+	// } else {
+	// 	fmt.Println("CUSIP exists")
 
-		var quoterx Quote
-		fmt.Println("Unmarshalling CP " + quote.CUSIP)
-		err = json.Unmarshal(cpRxBytes, &quoterx)
-		if err != nil {
-			fmt.Println("Error unmarshalling cp " + quote.CUSIP)
-			return nil, errors.New("Error unmarshalling cp " + quote.CUSIP)
-		}
+	// 	var quoterx Quote
+	// 	fmt.Println("Unmarshalling CP " + quote.CUSIP)
+	// 	err = json.Unmarshal(cpRxBytes, &quoterx)
+	// 	if err != nil {
+	// 		fmt.Println("Error unmarshalling cp " + quote.CUSIP)
+	// 		return nil, errors.New("Error unmarshalling cp " + quote.CUSIP)
+	// 	}
 
-		quoterx.Qty = quoterx.Qty + quote.Qty
+	// 	quoterx.Qty = quoterx.Qty + quote.Qty
 
-		// for key, val := range quoterx.Owners {
-		// 	if val.Company == quote.Issuer {
-		// 		quoterx.Owners[key].Quantity += quote.Qty
-		// 		break
-		// 	}
-		// }
+	// 	// for key, val := range quoterx.Owners {
+	// 	// 	if val.Company == quote.Issuer {
+	// 	// 		quoterx.Owners[key].Quantity += quote.Qty
+	// 	// 		break
+	// 	// 	}
+	// 	// }
 
-		cpWriteBytes, err := json.Marshal(&quoterx)
-		if err != nil {
-			fmt.Println("Error marshalling cp")
-			return nil, errors.New("Error issuing commercial paper")
-		}
-		err = stub.PutState(quotePrefix+quote.CUSIP, cpWriteBytes)
-		if err != nil {
-			fmt.Println("Error issuing paper")
-			return nil, errors.New("Error issuing commercial paper")
-		}
+	// 	cpWriteBytes, err := json.Marshal(&quoterx)
+	// 	if err != nil {
+	// 		fmt.Println("Error marshalling cp")
+	// 		return nil, errors.New("Error issuing commercial paper")
+	// 	}
+	// 	err = stub.PutState(quotePrefix+quote.CUSIP, cpWriteBytes)
+	// 	if err != nil {
+	// 		fmt.Println("Error issuing paper")
+	// 		return nil, errors.New("Error issuing commercial paper")
+	// 	}
 
-		fmt.Println("Updated commercial paper %+v\n", quoterx)
-		return nil, nil
-	}
+	// 	fmt.Println("Updated commercial paper %+v\n", quoterx)
+	// 	return nil, nil
+	// }
 	
 }
 
