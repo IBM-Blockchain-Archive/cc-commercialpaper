@@ -1,18 +1,14 @@
 /*
 Copyright 2016 IBM
-
 Licensed under the Apache License, Version 2.0 (the "License")
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
 Licensed Materials - Property of IBM
 © Copyright IBM Corp. 2016
 */
@@ -29,7 +25,6 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
-var quotePrefix = "qt:"
 var cpPrefix = "cp:"
 var accountPrefix = "acct:"
 var accountsKey = "accounts"
@@ -75,24 +70,6 @@ type Owner struct {
 	Company  string `json:"company"`
 	Quantity int    `json:"quantity"`
 }
-
-
-
-type Quote struct {
-	CUSIP     string  `json:"cusip"`
-	Item    string  `json:"item"`
-	Qty    string  `json:"qty"`
-	ShipTerm    string  `json:"shipterm"`
-	ShipDate    string  `json:"shipdate"`
-	ItemDetails    string  `json:"itemdetails"`
-	Status    string  `json:"status"`
-	Issuer    string  `json:"issuer"`
-	IssueDate string  `json:"issueDate"`
-	ModifiedOn    string  `json:"modifiedon"`
-	RequesterOrg    string  `json:"requesterorg"`
-	Country    string  `json:"country"`
-}
-
 
 type CP struct {
 	CUSIP     string  `json:"cusip"`
@@ -236,169 +213,6 @@ func (t *SimpleChaincode) createAccount(stub shim.ChaincodeStubInterface, args [
 
 }
 
-
-/* Added by Narayanan L for Trade Finance */
-
-
-func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-
-	
-	//need one arg
-	if len(args) != 1 {
-		fmt.Println("error invalid arguments")
-		return nil, errors.New("Incorrect number of arguments. Expecting Quotation record")
-	}
-
-	var quote Quote
-	var err error
-	var account Account
-
-	fmt.Println("Unmarshalling Quote")
-	err = json.Unmarshal([]byte(args[0]), &quote)
-	if err != nil {
-		fmt.Println("error invalid Quote issue")
-		return nil, errors.New("Invalid Quote issue")
-	}
-
-	//generate the CUSIP
-	//get account prefix
-	fmt.Println("Getting state of - " + accountPrefix + quote.Issuer)
-	accountBytes, err := stub.GetState(accountPrefix + quote.Issuer)
-	if err != nil {
-		fmt.Println("Error Getting state of - " + accountPrefix + quote.Issuer)
-		return nil, errors.New("Error retrieving account " + quote.Issuer)
-	}
-	err = json.Unmarshal(accountBytes, &account)
-	if err != nil {
-		fmt.Println("Error Unmarshalling accountBytes")
-		return nil, errors.New("Error retrieving account " + quote.Issuer)
-	}
-
-	account.AssetsIds = append(account.AssetsIds, quote.CUSIP)
-
-	// Set the issuer to be the owner of all quantity
-	// var owner Owner
-	// owner.Company = cp.Issuer
-	// owner.Quantity = cp.Qty
-
-	// cp.Owners = append(cp.Owners, owner)
-
-	suffix, err := generateCUSIPSuffix(quote.IssueDate, 10000)
-	if err != nil {
-		fmt.Println("Error generating cusip")
-		return nil, errors.New("Error generating CUSIP")
-	}
-
-	fmt.Println("Marshalling Quote bytes")
-	quote.CUSIP = account.Prefix + suffix
-
-	fmt.Println("Getting State on CP " + quote.CUSIP)
-	cpRxBytes, err := stub.GetState(quotePrefix + quote.CUSIP)
-	if cpRxBytes == nil {
-		fmt.Println("CUSIP does not exist, creating it")
-		cpBytes, err := json.Marshal(&quote)
-		if err != nil {
-			fmt.Println("Error marshalling quote")
-			return nil, errors.New("Error issuing quote")
-		}
-		err = stub.PutState(quotePrefix+quote.CUSIP, cpBytes)
-		if err != nil {
-			fmt.Println("Error issuing paper")
-			return nil, errors.New("Error issuing quote")
-		}
-
-		// fmt.Println("Marshalling account bytes to write")
-		// accountBytesToWrite, err := json.Marshal(&account)
-		// if err != nil {
-		// 	fmt.Println("Error marshalling account")
-		// 	return nil, errors.New("Error issuing commercial paper")
-		// }
-		// err = stub.PutState(accountPrefix+cp.Issuer, accountBytesToWrite)
-		// if err != nil {
-		// 	fmt.Println("Error putting state on accountBytesToWrite")
-		// 	return nil, errors.New("Error issuing commercial paper")
-		// }
-
-		// Update the paper keys by adding the new key
-		fmt.Println("Getting Paper Keys")
-		keysBytes, err := stub.GetState("PaperKeys")
-		if err != nil {
-			fmt.Println("Error retrieving paper keys")
-			return nil, errors.New("Error retrieving paper keys")
-		}
-		var keys []string
-		err = json.Unmarshal(keysBytes, &keys)
-		if err != nil {
-			fmt.Println("Error unmarshel keys")
-			return nil, errors.New("Error unmarshalling paper keys ")
-		}
-
-		fmt.Println("Appending the new key to Paper Keys")
-		foundKey := false
-		for _, key := range keys {
-			if key == quotePrefix+quote.CUSIP {
-				foundKey = true
-			}
-		}
-		if foundKey == false {
-			keys = append(keys, quotePrefix+quote.CUSIP)
-			keysBytesToWrite, err := json.Marshal(&keys)
-			if err != nil {
-				fmt.Println("Error marshalling keys")
-				return nil, errors.New("Error marshalling the keys")
-			}
-			fmt.Println("Put state on PaperKeys")
-			err = stub.PutState("PaperKeys", keysBytesToWrite)
-			if err != nil {
-				fmt.Println("Error writting keys back")
-				return nil, errors.New("Error writing the keys back")
-			}
-		}
-
-		fmt.Println("Issue commercial paper %+v\n", quote)
-		return nil, nil
-	} else {
-		fmt.Println("CUSIP exists")
-
-		var quoterx Quote
-		fmt.Println("Unmarshalling CP " + quote.CUSIP)
-		err = json.Unmarshal(cpRxBytes, &quoterx)
-		if err != nil {
-			fmt.Println("Error unmarshalling cp " + quote.CUSIP)
-			return nil, errors.New("Error unmarshalling cp " + quote.CUSIP)
-		}
-
-		quoterx.Qty = quoterx.Qty + quote.Qty
-
-		// for key, val := range quoterx.Owners {
-		// 	if val.Company == quote.Issuer {
-		// 		quoterx.Owners[key].Quantity += quote.Qty
-		// 		break
-		// 	}
-		// }
-
-		cpWriteBytes, err := json.Marshal(&quoterx)
-		if err != nil {
-			fmt.Println("Error marshalling cp")
-			return nil, errors.New("Error issuing commercial paper")
-		}
-		err = stub.PutState(quotePrefix+quote.CUSIP, cpWriteBytes)
-		if err != nil {
-			fmt.Println("Error issuing paper")
-			return nil, errors.New("Error issuing commercial paper")
-		}
-
-		fmt.Println("Updated commercial paper %+v\n", quoterx)
-		return nil, nil
-	}
-}
-
-
-
-
-
-
-
 func (t *SimpleChaincode) issueCommercialPaper(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
 	/*		0
@@ -425,7 +239,6 @@ func (t *SimpleChaincode) issueCommercialPaper(stub shim.ChaincodeStubInterface,
 			],
 			"issuer":"company2",
 			"issueDate":"1456161763790"  (current time in milliseconds as a string)
-
 		}
 	*/
 	//need one arg
