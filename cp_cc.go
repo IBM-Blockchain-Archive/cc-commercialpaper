@@ -261,7 +261,7 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 	err = json.Unmarshal([]byte(args[0]), &quote)
 	if err != nil {
 		fmt.Println("error invalid Quote issue")
-		return "nil", errors.New("Invalid Quote issue")
+		return nil, errors.New("Invalid Quote issue")
 	}
 
 	//generate the CUSIP
@@ -303,12 +303,12 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 		cpBytes, err := json.Marshal(&quote)
 		if err != nil {
 			fmt.Println("Error marshalling quote")
-			return "nil", errors.New("Error issuing quote")
+			return nil, errors.New("Error issuing quote")
 		}
 		err = stub.PutState(quotePrefix+quote.CUSIP, cpBytes)
 		if err != nil {
 			fmt.Println("Error issuing paper")
-			return "nil", errors.New("Error issuing quote")
+			return nil, errors.New("Error issuing quote")
 		}
 
 		// fmt.Println("Marshalling account bytes to write")
@@ -324,43 +324,43 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 		// }
 
 		// Update the paper keys by adding the new key
-		fmt.Println("Getting Paper Keys")
-		keysBytes, err := stub.GetState("QuoteKeys")
-		if err != nil {
-			fmt.Println("Error retrieving paper keys")
-			return "nil", errors.New("Error retrieving paper keys")
-		}
-		var keys []string
-		err = json.Unmarshal(keysBytes, &keys)
-		if err != nil {
-			fmt.Println("Error unmarshel keys")
-			return "nil", errors.New("Error unmarshalling paper keys ")
-		}
+		// fmt.Println("Getting Paper Keys")
+		// keysBytes, err := stub.GetState("QuoteKeys")
+		// if err != nil {
+		// 	fmt.Println("Error retrieving paper keys")
+		// 	return nil, errors.New("Error retrieving paper keys")
+		// }
+		// var keys []string
+		// err = json.Unmarshal(keysBytes, &keys)
+		// if err != nil {
+		// 	fmt.Println("Error unmarshel keys")
+		// 	return nil, errors.New("Error unmarshalling paper keys ")
+		// }
 
-		fmt.Println("Appending the new key to Paper Keys")
-		foundKey := false
-		for _, key := range keys {
-			if key == quotePrefix+quote.CUSIP {
-				foundKey = true
-			}
-		}
-		if foundKey == false {
-			keys = append(keys, quotePrefix+quote.CUSIP)
-			keysBytesToWrite, err := json.Marshal(&keys)
-			if err != nil {
-				fmt.Println("Error marshalling keys")
-				return "nil", errors.New("Error marshalling the keys")
-			}
-			fmt.Println("Put state on QuoteKeys")
-			err = stub.PutState("QuoteKeys", keysBytesToWrite)
-			if err != nil {
-				fmt.Println("Error writting keys back")
-				return "nil", errors.New("Error writing the keys back")
-			}
-		}
+		// fmt.Println("Appending the new key to Paper Keys")
+		// foundKey := false
+		// for _, key := range keys {
+		// 	if key == quotePrefix+quote.CUSIP {
+		// 		foundKey = true
+		// 	}
+		// }
+		// if foundKey == false {
+		// 	keys = append(keys, quotePrefix+quote.CUSIP)
+		// 	keysBytesToWrite, err := json.Marshal(&keys)
+		// 	if err != nil {
+		// 		fmt.Println("Error marshalling keys")
+		// 		return nil, errors.New("Error marshalling the keys")
+		// 	}
+		// 	fmt.Println("Put state on QuoteKeys")
+		// 	err = stub.PutState("QuoteKeys", keysBytesToWrite)
+		// 	if err != nil {
+		// 		fmt.Println("Error writting keys back")
+		// 		return nil, errors.New("Error writing the keys back")
+		// 	}
+		// }
 
 		fmt.Println("Issue commercial paper %+v\n", quote)
-		return "nil", nil
+		return nil, nil
 	} else {
 		fmt.Println("CUSIP exists")
 
