@@ -906,7 +906,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	if function == "issueCommercialPaper" {
 		fmt.Println("Firing issueCommercialPaper")
 		//Create an asset with some value
-		return t.issueCommercialPaper(stub, args)
+		return t.issueQuote(stub, args)
 	}else if function == "issueQuote" {
 		fmt.Println("Firing issueQuote")
 		//Create an asset with some value
