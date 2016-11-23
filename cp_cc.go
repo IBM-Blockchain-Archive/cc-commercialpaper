@@ -910,7 +910,13 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	}else if function == "issueQuote" {
 		fmt.Println("Firing issueQuote")
 		//Create an asset with some value
-		return t.issueQuote(stub, args)
+		//return t.issueQuote(stub, args)
+		var err error
+		err = stub.PutState("1", []byte(args[0])) //write the variable into the chaincode state
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
 	}else if function == "transferPaper" {
 		fmt.Println("Firing cretransferPaperateAccounts")
 		return t.transferPaper(stub, args)
