@@ -242,7 +242,14 @@ func (t *SimpleChaincode) createAccount(stub shim.ChaincodeStubInterface, args [
 
 func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
-	
+	var err error
+	err = stub.PutState("1", []byte(args[0])) //write the variable into the chaincode state
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
+
+	/*
 	//need one arg
 	if len(args) != 1 {
 		fmt.Println("error invalid arguments")
@@ -391,6 +398,7 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 		fmt.Println("Updated commercial paper %+v\n", quoterx)
 		return nil, nil
 	}
+	*/
 }
 
 
