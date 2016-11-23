@@ -903,23 +903,15 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("invoke is running " + function)
 
-	if function == "issueQuote" {
-		fmt.Println("Firing issueQuote")
-		//Create an asset with some value
-		//return t.issueQuote(stub, args)
-		var err error
-		var value string
-		value=args[0]
-		err = stub.PutState("1", []byte(value)) //write the variable into the chaincode state
-		if err != nil {
-			return nil, err
-		}
-		return nil, nil
-	} else if function == "issueCommercialPaper" {
+	if function == "issueCommercialPaper" {
 		fmt.Println("Firing issueCommercialPaper")
 		//Create an asset with some value
 		return t.issueCommercialPaper(stub, args)
-	} else if function == "transferPaper" {
+	}else if function == "issueQuote" {
+		fmt.Println("Firing issueQuote")
+		//Create an asset with some value
+		return t.issueCommercialPaper(stub, args)
+	}else if function == "transferPaper" {
 		fmt.Println("Firing cretransferPaperateAccounts")
 		return t.transferPaper(stub, args)
 	} else if function == "createAccounts" {
