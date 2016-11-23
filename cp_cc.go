@@ -29,6 +29,7 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
+var quotePrefix = "qt:"
 var cpPrefix = "cp:"
 var accountPrefix = "acct:"
 var accountsKey = "accounts"
@@ -75,6 +76,96 @@ type Owner struct {
 	Quantity int    `json:"quantity"`
 }
 
+
+
+type Quote struct {
+	QuoteNo     string  `json:"quoteNo"`
+	Item    string  `json:"item"`
+	Qty    string  `json:"qty"`
+	ShipTerm    string  `json:"shipterm"`
+	ShipDate    string  `json:"shipdate"`
+	ItemDetails    string  `json:"itemdetails"`
+	Status    string  `json:"status"`
+	Issuer    string  `json:"issuer"`
+	IssueDate string  `json:"issueDate"`
+	ModifiedOn    string  `json:"modifiedon"`
+	RequesterOrg    string  `json:"requesterorg"`
+	Country    string  `json:"country"`
+}
+
+type LC struct {
+	QuoteNo     string  `json:"quoteNo"`
+	LCNo    string  `json:"lcNo"`
+	QuoteValidity    string  `json:"quoteValidity"`
+	TotalAmount    string  `json:"totalAmount"`
+	SalesTax    string  `json:"salesTax"`
+	Representative    string  `json:"representative"`
+	OrgName    string  `json:"orgName"`
+	Address    string  `json:"address"`
+	AccountName string  `json:"accountName"`
+	ModifiedOn    string  `json:"modifiedon"`
+	RequesterOrg    string  `json:"requesterorg"`
+	Country    string  `json:"country"`
+	ProductDetails []Product `json:"productDetails"`
+}
+
+type Product struct {
+	ItemNo     string  `json:"itemNo"`
+	ItemName    string  `json:"itemName"`
+	ListPrice    string  `json:"listPrice"`
+	Qty    string  `json:"qty"`
+	Discount    string  `json:"discount"`
+	Amount    string  `json:"amount"`
+	TaxMode    string  `json:"taxMode"`
+	Status    string  `json:"status"`
+}
+
+type BL struct {
+	BLNo    string  `json:"blNo"`
+	SenderName    string  `json:"senderName"`
+	SenderAddress    string  `json:"senderAddress"`
+	SenderSID    string  `json:"senderSID"`
+	SenderFOB	string  `json:"senderFOB"`
+	ReceiverName    string  `json:"receiverName"`
+	ReceiverAddress    string  `json:"receiverAddress"`
+	ReceiverSID    string  `json:"receiverSID"`
+	ReceiverFOB		string  `json:"receiverFOB"`
+	OtherPartyName    string  `json:"otherPartyName"`
+	OtherPartyAddress    string  `json:"otherPartyAddress"`
+	CarrierName		string  `json:"carrierName"`
+	TrailerNumber	string  `json:"trailerNumber"`
+	SealNumber		string  `json:"sealNumber"`
+	SCAC 			string  `json:"sCAC"`
+	ProNumber 		string  `json:"proNumber"`
+	FrieghtChargeTerms string  `json:"frieghtChargeTerms"`
+	CODAmount string  `json:"cODAmount"`
+	FeeTerms string  `json:"feeTerms"`
+	Orderdetails []Order `json:"orderDetails"`
+	CarrierInfo []Carrier `json:"carrierInfo"`
+}
+
+type Carrier struct {
+	HandlingQty     string  `json:"handlingQty"`
+	HandlingType    string  `json:"handlingType"`
+	PackageQty     string  `json:"packageQty"`
+	PackageType    string  `json:"packageType"`
+	Weight     string  `json:"weight"`
+	HM    string  `json:"hm"`
+	ComDesc     string  `json:"comDesc"`
+	LTLNMFC    string  `json:"lTLNMFC"`
+	LTLClass     string  `json:"lTLClass"`
+}
+
+type Order struct {
+	OrderNumber     string  `json:"orderNumber"`
+	NoofPack    string  `json:"noofPack"`
+	Weight     string  `json:"weight"`
+	Pallet    string  `json:"pallet"`
+	AdditionalInfo     string  `json:"additionalInfo"`
+}
+
+
+
 type CP struct {
 	CUSIP     string  `json:"cusip"`
 	Ticker    string  `json:"ticker"`
@@ -110,6 +201,18 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	err := stub.PutState("PaperKeys", blankBytes)
 	if err != nil {
 		fmt.Println("Failed to initialize paper key collection")
+	}
+	err1 := stub.PutState("QuoteKeys", blankBytes)
+	if err1 != nil {
+		fmt.Println("Failed to initialize paper key collection")
+	}
+	err2 := stub.PutState("LCKeys", blankBytes)
+	if err2 != nil {
+		fmt.Println("Failed to initialize LC key collection")
+	}
+	err3 := stub.PutState("BLKeys", blankBytes)
+	if err3 != nil {
+		fmt.Println("Failed to initialize LC key collection")
 	}
 
 	fmt.Println("Initialization complete")
@@ -216,6 +319,246 @@ func (t *SimpleChaincode) createAccount(stub shim.ChaincodeStubInterface, args [
 	}
 
 }
+
+
+/* Added by Narayanan L for Trade Finance */
+
+
+func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+
+	/* 
+
+	"{
+	\"quoteNo\":\"123\",
+	\"item\":\"Coffee\",
+	\"qty\":\"100\",
+	\"shipterm\":\"FOB\",
+	\"shipdate\":\"2016-11-22\",
+	\"itemdetails\":\"grade A coffee\",
+	\"status\":\"New\",
+	\"issuer\":\"demo_account2\",
+	\"issueDate\":\"2016-11-22\",
+	\"modifiedon\":\"2016-11-22\",
+	\"requesterorg\":\"Test\",
+	\"country\":\"India\"
+	}"
+
+ 	*/
+
+	var quote Quote
+	fmt.Println("Unmarshalling CP")
+	var err = json.Unmarshal([]byte(args[0]), &quote)
+	if err != nil {
+		fmt.Println("error invalid paper issue")
+		fmt.Println(err)
+		return nil, errors.New("Invalid Quote issue")
+	}
+	cpBytes, err := json.Marshal(&quote)
+	if err != nil {
+		fmt.Println("Error marshalling cp")
+		return nil, errors.New("Error issuing commercial paper")
+	}
+	err = stub.PutState(quote.QuoteNo, cpBytes)
+	if err != nil {
+		fmt.Println("Error issuing paper")
+		return nil, errors.New("Error issuing commercial paper")
+	}
+
+	// Update the Quote keys by adding the new key
+		fmt.Println("Getting Quote Keys")
+		keysBytes, err := stub.GetState("QuoteKeys")
+		if err != nil {
+			fmt.Println("Error retrieving Quote keys")
+			return nil, errors.New("Error retrieving Quote keys")
+		}
+		var keys []string
+		err = json.Unmarshal(keysBytes, &keys)
+		if err != nil {
+			fmt.Println("Error unmarshel keys")
+			return nil, errors.New("Error unmarshalling Quote keys ")
+		}
+
+		fmt.Println("Appending the new key to Paper Keys")
+		foundKey := false
+		for _, key := range keys {
+			if key == quote.QuoteNo {
+				foundKey = true
+			}
+		}
+		if foundKey == false {
+			keys = append(keys, quote.QuoteNo)
+			keysBytesToWrite, err := json.Marshal(&keys)
+			if err != nil {
+				fmt.Println("Error marshalling keys")
+				return nil, errors.New("Error marshalling the keys")
+			}
+			fmt.Println("Put state on QuoteKeys")
+			err = stub.PutState("QuoteKeys", keysBytesToWrite)
+			if err != nil {
+				fmt.Println("Error writting keys back")
+				return nil, errors.New("Error writing the keys back")
+			}
+		}
+
+		fmt.Println("Issue commercial Quote %+v\n", quote)
+
+	
+	return nil, nil
+
+	
+}
+
+
+func (t *SimpleChaincode) issueLC(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+
+	/*
+
+	"{\"type\":\"LC\",\"quoteNo\":\"123\",\"lcNo\":\"100\",\"quoteValidity\":\"2016-12-12\",\"totalAmount\":\"10000\",\"salesTax\":\"10\",\"representative\":\"Viswa\",\"orgName\":\"SimplyFI\",\"address\":\"Bangalore\",\"accountName\":\"Test\",\"productDetails\": \"{\"itemName\":\"Test\",\"listPrice\":\"123\",\"qty\":\"100\",\"discount\":\"20\",\"amount\":\"10000\",\"taxMode\":\"test\",\"status\":\"New\"}\"}"
+
+	 */
+
+
+	var lc LC
+	fmt.Println("Unmarshalling LC")
+	var err = json.Unmarshal([]byte(args[0]), &lc)
+	if err != nil {
+		fmt.Println("error invalid LC issue")
+		fmt.Println(err)
+		return nil, errors.New("Invalid LC issue")
+	}
+	cpBytes, err := json.Marshal(&lc)
+	if err != nil {
+		fmt.Println("Error marshalling LC")
+		return nil, errors.New("Error issuing LC paper")
+	}
+	err = stub.PutState(lc.LCNo, cpBytes)
+	if err != nil {
+		fmt.Println("Error issuing LC")
+		return nil, errors.New("Error issuing LC paper")
+	}
+
+	// Update the Quote keys by adding the new key
+		fmt.Println("Getting LC Keys")
+		keysBytes, err := stub.GetState("LCKeys")
+		if err != nil {
+			fmt.Println("Error retrieving LC keys")
+			return nil, errors.New("Error retrieving LC keys")
+		}
+		var keys []string
+		err = json.Unmarshal(keysBytes, &keys)
+		if err != nil {
+			fmt.Println("Error unmarshel LC keys")
+			return nil, errors.New("Error unmarshalling LC keys ")
+		}
+
+		fmt.Println("Appending the new key to LC Keys")
+		foundKey := false
+		for _, key := range keys {
+			if key == lc.LCNo {
+				foundKey = true
+			}
+		}
+		if foundKey == false {
+			keys = append(keys, lc.LCNo)
+			keysBytesToWrite, err := json.Marshal(&keys)
+			if err != nil {
+				fmt.Println("Error marshalling LC keys")
+				return nil, errors.New("Error marshalling the LC keys")
+			}
+			fmt.Println("Put state on LCKeys")
+			err = stub.PutState("LCKeys", keysBytesToWrite)
+			if err != nil {
+				fmt.Println("Error writting keys back")
+				return nil, errors.New("Error writing the keys back")
+			}
+		}
+
+		fmt.Println("Issue LC paper %+v\n", lc)
+
+	
+	return nil, nil
+
+	
+}
+
+
+func (t *SimpleChaincode) issueBL(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+
+	/*
+
+	"{\"type\":\"LC\",\"quoteNo\":\"123\",\"lcNo\":\"100\",\"quoteValidity\":\"2016-12-12\",\"totalAmount\":\"10000\",\"salesTax\":\"10\",\"representative\":\"Viswa\",\"orgName\":\"SimplyFI\",\"address\":\"Bangalore\",\"accountName\":\"Test\",\"productDetails\": \"{\"itemName\":\"Test\",\"listPrice\":\"123\",\"qty\":\"100\",\"discount\":\"20\",\"amount\":\"10000\",\"taxMode\":\"test\",\"status\":\"New\"}\"}"
+
+	 */
+
+
+	var bl BL
+	fmt.Println("Unmarshalling BL")
+	var err = json.Unmarshal([]byte(args[0]), &bl)
+	if err != nil {
+		fmt.Println("error invalid BL issue")
+		fmt.Println(err)
+		return nil, errors.New("Invalid BL issue")
+	}
+	cpBytes, err := json.Marshal(&bl)
+	if err != nil {
+		fmt.Println("Error marshalling BL")
+		return nil, errors.New("Error issuing BL paper")
+	}
+	err = stub.PutState(bl.BLNo, cpBytes)
+	if err != nil {
+		fmt.Println("Error issuing BL")
+		return nil, errors.New("Error issuing BL paper")
+	}
+
+	// Update the Quote keys by adding the new key
+		fmt.Println("Getting BL Keys")
+		keysBytes, err := stub.GetState("BLKeys")
+		if err != nil {
+			fmt.Println("Error retrieving BL keys")
+			return nil, errors.New("Error retrieving BL keys")
+		}
+		var keys []string
+		err = json.Unmarshal(keysBytes, &keys)
+		if err != nil {
+			fmt.Println("Error unmarshel BL keys")
+			return nil, errors.New("Error unmarshalling BL keys ")
+		}
+
+		fmt.Println("Appending the new key to BL Keys")
+		foundKey := false
+		for _, key := range keys {
+			if key == bl.BLNo {
+				foundKey = true
+			}
+		}
+		if foundKey == false {
+			keys = append(keys, bl.BLNo)
+			keysBytesToWrite, err := json.Marshal(&keys)
+			if err != nil {
+				fmt.Println("Error marshalling BL keys")
+				return nil, errors.New("Error marshalling the BL keys")
+			}
+			fmt.Println("Put state on BLKeys")
+			err = stub.PutState("BLKeys", keysBytesToWrite)
+			if err != nil {
+				fmt.Println("Error writting keys back")
+				return nil, errors.New("Error writing the keys back")
+			}
+		}
+
+		fmt.Println("Issue BL paper %+v\n", bl)
+
+	
+	return nil, nil
+
+	
+}
+
+
+
 
 func (t *SimpleChaincode) issueCommercialPaper(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
@@ -394,6 +737,111 @@ func (t *SimpleChaincode) issueCommercialPaper(stub shim.ChaincodeStubInterface,
 		fmt.Println("Updated commercial paper %+v\n", cprx)
 		return nil, nil
 	}
+}
+
+func GetAllQuotes(stub shim.ChaincodeStubInterface) ([]Quote, error) {
+
+	var allQuotes []Quote
+
+	// Get list of all the keys
+	keysBytes, err := stub.GetState("QuoteKeys")
+	if err != nil {
+		fmt.Println("Error retrieving Quote keys")
+		return nil, errors.New("Error retrieving Quote keys")
+	}
+	var keys []string
+	err = json.Unmarshal(keysBytes, &keys)
+	if err != nil {
+		fmt.Println("Error unmarshalling Quote keys")
+		return nil, errors.New("Error unmarshalling Quote keys")
+	}
+
+	// Get all the cps
+	for _, value := range keys {
+		cpBytes, err := stub.GetState(value)
+
+		var quote Quote
+		err = json.Unmarshal(cpBytes, &quote)
+		if err != nil {
+			fmt.Println("Error retrieving quote " + value)
+			return nil, errors.New("Error retrieving quote " + value)
+		}
+
+		fmt.Println("Appending quote" + value)
+		allQuotes = append(allQuotes, quote)
+	}
+
+	return allQuotes, nil
+}
+
+func GetAllLC(stub shim.ChaincodeStubInterface) ([]LC, error) {
+
+	var allLC []LC
+
+	// Get list of all the keys
+	keysBytes, err := stub.GetState("LCKeys")
+	if err != nil {
+		fmt.Println("Error retrieving LC keys")
+		return nil, errors.New("Error retrieving LC keys")
+	}
+	var keys []string
+	err = json.Unmarshal(keysBytes, &keys)
+	if err != nil {
+		fmt.Println("Error unmarshalling LC keys")
+		return nil, errors.New("Error unmarshalling LC keys")
+	}
+
+	// Get all the cps
+	for _, value := range keys {
+		cpBytes, err := stub.GetState(value)
+
+		var lc LC
+		err = json.Unmarshal(cpBytes, &lc)
+		if err != nil {
+			fmt.Println("Error retrieving LC " + value)
+			return nil, errors.New("Error retrieving LC " + value)
+		}
+
+		fmt.Println("Appending quote" + value)
+		allLC = append(allLC, lc)
+	}
+
+	return allLC, nil
+}
+
+func GetAllBL(stub shim.ChaincodeStubInterface) ([]BL, error) {
+
+	var allBL []BL
+
+	// Get list of all the keys
+	keysBytes, err := stub.GetState("BLKeys")
+	if err != nil {
+		fmt.Println("Error retrieving BL keys")
+		return nil, errors.New("Error retrieving BL keys")
+	}
+	var keys []string
+	err = json.Unmarshal(keysBytes, &keys)
+	if err != nil {
+		fmt.Println("Error unmarshalling BL keys")
+		return nil, errors.New("Error unmarshalling BL keys")
+	}
+
+	// Get all the cps
+	for _, value := range keys {
+		cpBytes, err := stub.GetState(value)
+
+		var bl BL
+		err = json.Unmarshal(cpBytes, &bl)
+		if err != nil {
+			fmt.Println("Error retrieving BL " + value)
+			return nil, errors.New("Error retrieving BL " + value)
+		}
+
+		fmt.Println("Appending quote" + value)
+		allBL = append(allBL, bl)
+	}
+
+	return allBL, nil
 }
 
 func GetAllCPs(stub shim.ChaincodeStubInterface) ([]CP, error) {
@@ -696,6 +1144,51 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 			fmt.Println("All success, returning the company")
 			return companyBytes, nil
 		}
+	} else if args[0] == "GetAllQuotes" {
+		fmt.Println("Getting all Quotes")
+		allQuotes, err := GetAllQuotes(stub)
+		if err != nil {
+			fmt.Println("Error from getallQuotes")
+			return nil, err
+		} else {
+			allQuotesBytes, err1 := json.Marshal(&allQuotes)
+			if err1 != nil {
+				fmt.Println("Error marshalling allQuotes")
+				return nil, err1
+			}
+			fmt.Println("All success, returning allcps")
+			return allQuotesBytes, nil
+		}
+	} else if args[0] == "GetAllLC" {
+		fmt.Println("Getting all Quotes")
+		allLC, err := GetAllLC(stub)
+		if err != nil {
+			fmt.Println("Error from getallLC")
+			return nil, err
+		} else {
+			allLCBytes, err1 := json.Marshal(&allLC)
+			if err1 != nil {
+				fmt.Println("Error marshalling allLC")
+				return nil, err1
+			}
+			fmt.Println("All success, returning allLCs")
+			return allLCBytes, nil
+		}
+	} else if args[0] == "GetAllBL" {
+		fmt.Println("Getting all BL")
+		allBL, err := GetAllBL(stub)
+		if err != nil {
+			fmt.Println("Error from getallBL")
+			return nil, err
+		} else {
+			allBLBytes, err1 := json.Marshal(&allBL)
+			if err1 != nil {
+				fmt.Println("Error marshalling allBL")
+				return nil, err1
+			}
+			fmt.Println("All success, returning allBLs")
+			return allBLBytes, nil
+		}
 	} else {
 		fmt.Println("Generic Query call")
 		bytes, err := stub.GetState(args[0])
@@ -717,6 +1210,18 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		fmt.Println("Firing issueCommercialPaper")
 		//Create an asset with some value
 		return t.issueCommercialPaper(stub, args)
+	} else if function == "issueQuote" {
+		fmt.Println("Firing issueQuote")
+		//Create an asset with some value
+		return t.issueQuote(stub, args)
+	} else if function == "issueLC" {
+		fmt.Println("Firing issueLC")
+		//Create an asset with some value
+		return t.issueLC(stub, args)
+	} else if function == "issueBL" {
+		fmt.Println("Firing issueBL")
+		//Create an asset with some value
+		return t.issueBL(stub, args)
 	} else if function == "transferPaper" {
 		fmt.Println("Firing cretransferPaperateAccounts")
 		return t.transferPaper(stub, args)
