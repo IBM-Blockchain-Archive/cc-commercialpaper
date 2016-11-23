@@ -132,6 +132,10 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	if err != nil {
 		fmt.Println("Failed to initialize paper key collection")
 	}
+	err1 := stub.PutState("QuoteKeys", blankBytes)
+	if err1 != nil {
+		fmt.Println("Failed to initialize paper key collection")
+	}
 
 	fmt.Println("Initialization complete")
 	return nil, nil
