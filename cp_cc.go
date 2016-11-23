@@ -899,7 +899,11 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		fmt.Println("Firing issueCommercialPaper")
 		//Create an asset with some value
 		return t.issueCommercialPaper(stub, args)
-	} else if function == "transferPaper" {
+	}else if function == "issueQuote" {
+		fmt.Println("Firing issueQuote")
+		//Create an asset with some value
+		return t.issueQuote(stub, args)
+	}else if function == "transferPaper" {
 		fmt.Println("Firing cretransferPaperateAccounts")
 		return t.transferPaper(stub, args)
 	} else if function == "createAccounts" {
