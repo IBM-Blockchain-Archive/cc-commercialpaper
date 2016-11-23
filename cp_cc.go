@@ -94,6 +94,8 @@ type Quote struct {
 }
 
 
+
+
 type CP struct {
 	CUSIP     string  `json:"cusip"`
 	Ticker    string  `json:"ticker"`
@@ -242,12 +244,33 @@ func (t *SimpleChaincode) createAccount(stub shim.ChaincodeStubInterface, args [
 
 func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
+
+	/* 
+
+	"{
+	\"quoteNo\":\"123\",
+	\"item\":\"Coffee\",
+	\"qty\":\"100\",
+	\"shipterm\":\"FOB\",
+	\"shipdate\":\"2016-11-22\",
+	\"itemdetails\":\"grade A coffee\",
+	\"status\":\"New\",
+	\"issuer\":\"demo_account2\",
+	\"issueDate\":\"2016-11-22\",
+	\"modifiedon\":\"2016-11-22\",
+	\"requesterorg\":\"Test\",
+	\"country\":\"India\"
+	}"
+
+ 	*/
+
 	var quote Quote
 	fmt.Println("Unmarshalling CP")
 	var err = json.Unmarshal([]byte(args[0]), &quote)
 	if err != nil {
 		fmt.Println("error invalid paper issue")
-		return nil, errors.New("Invalid commercial paper issue")
+		fmt.Println(err)
+		return nil, errors.New("Invalid Quote issue")
 	}
 	cpBytes, err := json.Marshal(&quote)
 	if err != nil {
