@@ -120,6 +120,51 @@ type Product struct {
 	Status    string  `json:"status"`
 }
 
+type BL struct {
+	BLNo    string  `json:"blNo"`
+	SenderName    string  `json:"senderName"`
+	SenderAddress    string  `json:"senderAddress"`
+	SenderSID    string  `json:"senderSID"`
+	SenderFOB	string  `json:"senderFOB"`
+	ReceiverName    string  `json:"receiverName"`
+	ReceiverAddress    string  `json:"receiverAddress"`
+	ReceiverSID    string  `json:"receiverSID"`
+	ReceiverFOB		string  `json:"receiverFOB"`
+	OtherPartyName    string  `json:"otherPartyName"`
+	OtherPartyAddress    string  `json:"otherPartyAddress"`
+	CarrierName		string  `json:"carrierName"`
+	TrailerNumber	string  `json:"trailerNumber"`
+	SealNumber		string  `json:"sealNumber"`
+	SCAC 			string  `json:"sCAC"`
+	ProNumber 		string  `json:"proNumber"`
+	FrieghtChargeTerms string  `json:"frieghtChargeTerms"`
+	CODAmount string  `json:"cODAmount"`
+	FeeTerms string  `json:"feeTerms"`
+	Orderdetails []Order `json:"orderDetails"`
+	CarrierInfo []Carrier `json:"carrierInfo"`
+}
+
+type Carrier struct {
+	HandlingQty     string  `json:"handlingQty"`
+	HandlingType    string  `json:"handlingType"`
+	PackageQty     string  `json:"packageQty"`
+	PackageType    string  `json:"packageType"`
+	Weight     string  `json:"weight"`
+	HM    string  `json:"hm"`
+	ComDesc     string  `json:"comDesc"`
+	LTLNMFC    string  `json:"lTLNMFC"`
+	LTLClass     string  `json:"lTLClass"`
+}
+
+type Order struct {
+	OrderNumber     string  `json:"orderNumber"`
+	NoofPack    string  `json:"noofPack"`
+	Weight     string  `json:"weight"`
+	Pallet    string  `json:"pallet"`
+	AdditionalInfo     string  `json:"additionalInfo"`
+}
+
+
 
 type CP struct {
 	CUSIP     string  `json:"cusip"`
@@ -160,6 +205,14 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	err1 := stub.PutState("QuoteKeys", blankBytes)
 	if err1 != nil {
 		fmt.Println("Failed to initialize paper key collection")
+	}
+	err2 := stub.PutState("LCKeys", blankBytes)
+	if err2 != nil {
+		fmt.Println("Failed to initialize LC key collection")
+	}
+	err3 := stub.PutState("BLKeys", blankBytes)
+	if err3 != nil {
+		fmt.Println("Failed to initialize LC key collection")
 	}
 
 	fmt.Println("Initialization complete")
@@ -431,7 +484,78 @@ func (t *SimpleChaincode) issueLC(stub shim.ChaincodeStubInterface, args []strin
 }
 
 
+func (t *SimpleChaincode) issueBL(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
+
+	/*
+
+	"{\"type\":\"LC\",\"quoteNo\":\"123\",\"lcNo\":\"100\",\"quoteValidity\":\"2016-12-12\",\"totalAmount\":\"10000\",\"salesTax\":\"10\",\"representative\":\"Viswa\",\"orgName\":\"SimplyFI\",\"address\":\"Bangalore\",\"accountName\":\"Test\",\"productDetails\": \"{\"itemName\":\"Test\",\"listPrice\":\"123\",\"qty\":\"100\",\"discount\":\"20\",\"amount\":\"10000\",\"taxMode\":\"test\",\"status\":\"New\"}\"}"
+
+	 */
+
+
+	var bl BL
+	fmt.Println("Unmarshalling BL")
+	var err = json.Unmarshal([]byte(args[0]), &bl)
+	if err != nil {
+		fmt.Println("error invalid BL issue")
+		fmt.Println(err)
+		return nil, errors.New("Invalid BL issue")
+	}
+	cpBytes, err := json.Marshal(&bl)
+	if err != nil {
+		fmt.Println("Error marshalling BL")
+		return nil, errors.New("Error issuing BL paper")
+	}
+	err = stub.PutState(bl.BLNo, cpBytes)
+	if err != nil {
+		fmt.Println("Error issuing BL")
+		return nil, errors.New("Error issuing BL paper")
+	}
+
+	// Update the Quote keys by adding the new key
+		fmt.Println("Getting BL Keys")
+		keysBytes, err := stub.GetState("BLKeys")
+		if err != nil {
+			fmt.Println("Error retrieving BL keys")
+			return nil, errors.New("Error retrieving BL keys")
+		}
+		var keys []string
+		err = json.Unmarshal(keysBytes, &keys)
+		if err != nil {
+			fmt.Println("Error unmarshel BL keys")
+			return nil, errors.New("Error unmarshalling BL keys ")
+		}
+
+		fmt.Println("Appending the new key to BL Keys")
+		foundKey := false
+		for _, key := range keys {
+			if key == bl.BLNo {
+				foundKey = true
+			}
+		}
+		if foundKey == false {
+			keys = append(keys, bl.BLNo)
+			keysBytesToWrite, err := json.Marshal(&keys)
+			if err != nil {
+				fmt.Println("Error marshalling BL keys")
+				return nil, errors.New("Error marshalling the BL keys")
+			}
+			fmt.Println("Put state on BLKeys")
+			err = stub.PutState("BLKeys", keysBytesToWrite)
+			if err != nil {
+				fmt.Println("Error writting keys back")
+				return nil, errors.New("Error writing the keys back")
+			}
+		}
+
+		fmt.Println("Issue BL paper %+v\n", bl)
+
+	
+	return nil, nil
+
+	
+}
 
 
 
@@ -648,6 +772,76 @@ func GetAllQuotes(stub shim.ChaincodeStubInterface) ([]Quote, error) {
 	}
 
 	return allQuotes, nil
+}
+
+func GetAllLC(stub shim.ChaincodeStubInterface) ([]LC, error) {
+
+	var allLC []LC
+
+	// Get list of all the keys
+	keysBytes, err := stub.GetState("LCKeys")
+	if err != nil {
+		fmt.Println("Error retrieving LC keys")
+		return nil, errors.New("Error retrieving LC keys")
+	}
+	var keys []string
+	err = json.Unmarshal(keysBytes, &keys)
+	if err != nil {
+		fmt.Println("Error unmarshalling LC keys")
+		return nil, errors.New("Error unmarshalling LC keys")
+	}
+
+	// Get all the cps
+	for _, value := range keys {
+		cpBytes, err := stub.GetState(value)
+
+		var lc LC
+		err = json.Unmarshal(cpBytes, &lc)
+		if err != nil {
+			fmt.Println("Error retrieving LC " + value)
+			return nil, errors.New("Error retrieving LC " + value)
+		}
+
+		fmt.Println("Appending quote" + value)
+		allLC = append(allLC, lc)
+	}
+
+	return allLC, nil
+}
+
+func GetAllBL(stub shim.ChaincodeStubInterface) ([]BL, error) {
+
+	var allBL []BL
+
+	// Get list of all the keys
+	keysBytes, err := stub.GetState("BLKeys")
+	if err != nil {
+		fmt.Println("Error retrieving BL keys")
+		return nil, errors.New("Error retrieving BL keys")
+	}
+	var keys []string
+	err = json.Unmarshal(keysBytes, &keys)
+	if err != nil {
+		fmt.Println("Error unmarshalling BL keys")
+		return nil, errors.New("Error unmarshalling BL keys")
+	}
+
+	// Get all the cps
+	for _, value := range keys {
+		cpBytes, err := stub.GetState(value)
+
+		var bl BL
+		err = json.Unmarshal(cpBytes, &bl)
+		if err != nil {
+			fmt.Println("Error retrieving BL " + value)
+			return nil, errors.New("Error retrieving BL " + value)
+		}
+
+		fmt.Println("Appending quote" + value)
+		allBL = append(allBL, bl)
+	}
+
+	return allBL, nil
 }
 
 func GetAllCPs(stub shim.ChaincodeStubInterface) ([]CP, error) {
@@ -965,6 +1159,36 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 			fmt.Println("All success, returning allcps")
 			return allQuotesBytes, nil
 		}
+	} else if args[0] == "GetAllLC" {
+		fmt.Println("Getting all Quotes")
+		allLC, err := GetAllLC(stub)
+		if err != nil {
+			fmt.Println("Error from getallLC")
+			return nil, err
+		} else {
+			allLCBytes, err1 := json.Marshal(&allLC)
+			if err1 != nil {
+				fmt.Println("Error marshalling allLC")
+				return nil, err1
+			}
+			fmt.Println("All success, returning allLCs")
+			return allLCBytes, nil
+		}
+	} else if args[0] == "GetAllBL" {
+		fmt.Println("Getting all BL")
+		allBL, err := GetAllBL(stub)
+		if err != nil {
+			fmt.Println("Error from getallBL")
+			return nil, err
+		} else {
+			allBLBytes, err1 := json.Marshal(&allBL)
+			if err1 != nil {
+				fmt.Println("Error marshalling allBL")
+				return nil, err1
+			}
+			fmt.Println("All success, returning allBLs")
+			return allBLBytes, nil
+		}
 	} else {
 		fmt.Println("Generic Query call")
 		bytes, err := stub.GetState(args[0])
@@ -985,15 +1209,19 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	if function == "issueCommercialPaper" {
 		fmt.Println("Firing issueCommercialPaper")
 		//Create an asset with some value
-		return t.issueQuote(stub, args)
+		return t.issueCommercialPaper(stub, args)
 	} else if function == "issueQuote" {
 		fmt.Println("Firing issueQuote")
 		//Create an asset with some value
-		return t.issueCommercialPaper(stub, args)
+		return t.issueQuote(stub, args)
 	} else if function == "issueLC" {
 		fmt.Println("Firing issueLC")
 		//Create an asset with some value
 		return t.issueLC(stub, args)
+	} else if function == "issueBL" {
+		fmt.Println("Firing issueBL")
+		//Create an asset with some value
+		return t.issueBL(stub, args)
 	} else if function == "transferPaper" {
 		fmt.Println("Firing cretransferPaperateAccounts")
 		return t.transferPaper(stub, args)
