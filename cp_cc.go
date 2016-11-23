@@ -516,6 +516,41 @@ func (t *SimpleChaincode) issueCommercialPaper(stub shim.ChaincodeStubInterface,
 	}
 }
 
+func GetAllQuotes(stub shim.ChaincodeStubInterface) ([]Quote, error) {
+
+	var allQuotes []Quote
+
+	// Get list of all the keys
+	keysBytes, err := stub.GetState("QuoteKeys")
+	if err != nil {
+		fmt.Println("Error retrieving Quote keys")
+		return nil, errors.New("Error retrieving Quote keys")
+	}
+	var keys []string
+	err = json.Unmarshal(keysBytes, &keys)
+	if err != nil {
+		fmt.Println("Error unmarshalling Quote keys")
+		return nil, errors.New("Error unmarshalling Quote keys")
+	}
+
+	// Get all the cps
+	for _, value := range keys {
+		cpBytes, err := stub.GetState(value)
+
+		var quote Quote
+		err = json.Unmarshal(cpBytes, &quote)
+		if err != nil {
+			fmt.Println("Error retrieving quote " + value)
+			return nil, errors.New("Error retrieving quote " + value)
+		}
+
+		fmt.Println("Appending quote" + value)
+		allQuotes = append(allQuotes, quote)
+	}
+
+	return allQuotes, nil
+}
+
 func GetAllCPs(stub shim.ChaincodeStubInterface) ([]CP, error) {
 
 	var allCPs []CP
@@ -815,6 +850,21 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 			}
 			fmt.Println("All success, returning the company")
 			return companyBytes, nil
+		}
+	} else if args[0] == "GetAllQuotes" {
+		fmt.Println("Getting all Quotes")
+		allQuotes, err := GetAllQuotes(stub)
+		if err != nil {
+			fmt.Println("Error from getallQuotes")
+			return nil, err
+		} else {
+			allQuotesBytes, err1 := json.Marshal(&allQuotes)
+			if err1 != nil {
+				fmt.Println("Error marshalling allQuotes")
+				return nil, err1
+			}
+			fmt.Println("All success, returning allcps")
+			return allQuotesBytes, nil
 		}
 	} else {
 		fmt.Println("Generic Query call")
