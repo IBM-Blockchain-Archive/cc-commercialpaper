@@ -93,7 +93,32 @@ type Quote struct {
 	Country    string  `json:"country"`
 }
 
+type LC struct {
+	QuoteNo     string  `json:"quoteNo"`
+	LCNo    string  `json:"lcNo"`
+	QuoteValidity    string  `json:"quoteValidity"`
+	TotalAmount    string  `json:"totalAmount"`
+	SalesTax    string  `json:"salesTax"`
+	Representative    string  `json:"representative"`
+	OrgName    string  `json:"orgName"`
+	Address    string  `json:"address"`
+	AccountName string  `json:"accountName"`
+	ModifiedOn    string  `json:"modifiedon"`
+	RequesterOrg    string  `json:"requesterorg"`
+	Country    string  `json:"country"`
+	ProductDetails []Product `json:"productDetails"`
+}
 
+type Product struct {
+	ItemNo     string  `json:"itemNo"`
+	ItemName    string  `json:"itemName"`
+	ListPrice    string  `json:"listPrice"`
+	Qty    string  `json:"qty"`
+	Discount    string  `json:"discount"`
+	Amount    string  `json:"amount"`
+	TaxMode    string  `json:"taxMode"`
+	Status    string  `json:"status"`
+}
 
 
 type CP struct {
@@ -323,7 +348,81 @@ func (t *SimpleChaincode) issueQuote(stub shim.ChaincodeStubInterface, args []st
 			}
 		}
 
-		fmt.Println("Issue commercial paper %+v\n", quote)
+		fmt.Println("Issue commercial Quote %+v\n", quote)
+
+	
+	return nil, nil
+
+	
+}
+
+
+func (t *SimpleChaincode) issueLC(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+
+	/*
+
+	"{\"type\":\"LC\",\"quoteNo\":\"123\",\"lcNo\":\"100\",\"quoteValidity\":\"2016-12-12\",\"totalAmount\":\"10000\",\"salesTax\":\"10\",\"representative\":\"Viswa\",\"orgName\":\"SimplyFI\",\"address\":\"Bangalore\",\"accountName\":\"Test\",\"productDetails\": \"{\"itemName\":\"Test\",\"listPrice\":\"123\",\"qty\":\"100\",\"discount\":\"20\",\"amount\":\"10000\",\"taxMode\":\"test\",\"status\":\"New\"}\"}"
+
+	 */
+
+
+	var lc LC
+	fmt.Println("Unmarshalling LC")
+	var err = json.Unmarshal([]byte(args[0]), &lc)
+	if err != nil {
+		fmt.Println("error invalid LC issue")
+		fmt.Println(err)
+		return nil, errors.New("Invalid LC issue")
+	}
+	cpBytes, err := json.Marshal(&lc)
+	if err != nil {
+		fmt.Println("Error marshalling LC")
+		return nil, errors.New("Error issuing LC paper")
+	}
+	err = stub.PutState(lc.LCNo, cpBytes)
+	if err != nil {
+		fmt.Println("Error issuing LC")
+		return nil, errors.New("Error issuing LC paper")
+	}
+
+	// Update the Quote keys by adding the new key
+		fmt.Println("Getting LC Keys")
+		keysBytes, err := stub.GetState("LCKeys")
+		if err != nil {
+			fmt.Println("Error retrieving LC keys")
+			return nil, errors.New("Error retrieving LC keys")
+		}
+		var keys []string
+		err = json.Unmarshal(keysBytes, &keys)
+		if err != nil {
+			fmt.Println("Error unmarshel LC keys")
+			return nil, errors.New("Error unmarshalling LC keys ")
+		}
+
+		fmt.Println("Appending the new key to LC Keys")
+		foundKey := false
+		for _, key := range keys {
+			if key == lc.LCNo {
+				foundKey = true
+			}
+		}
+		if foundKey == false {
+			keys = append(keys, lc.LCNo)
+			keysBytesToWrite, err := json.Marshal(&keys)
+			if err != nil {
+				fmt.Println("Error marshalling LC keys")
+				return nil, errors.New("Error marshalling the LC keys")
+			}
+			fmt.Println("Put state on LCKeys")
+			err = stub.PutState("LCKeys", keysBytesToWrite)
+			if err != nil {
+				fmt.Println("Error writting keys back")
+				return nil, errors.New("Error writing the keys back")
+			}
+		}
+
+		fmt.Println("Issue LC paper %+v\n", lc)
 
 	
 	return nil, nil
