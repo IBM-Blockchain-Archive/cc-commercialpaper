@@ -1,3 +1,5 @@
+DEPRECATED: See here for commercial paper chaincode: https://github.com/IBM-Blockchain/cp-web/tree/master/src/chaincode
+
 # Commercial Paper Chaincode
 Sample chaincode which demonstrates how to trade commercial paper between companies
 
